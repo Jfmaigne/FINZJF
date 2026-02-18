@@ -458,7 +458,7 @@ struct StatisticsView: View {
         let startOfRange = r.start
         let endOfRange = r.end
         let request = NSFetchRequest<NSManagedObject>(entityName: "BudgetEntryOccurrence")
-        request.predicate = NSPredicate(format: "(date >= %@) AND (date < %@)", startOfRange as NSDate, endOfRange as NSDate)
+        request.predicate = NSPredicate(format: "(date >= %@) AND (date < %@) AND (kind != %@)", startOfRange as NSDate, endOfRange as NSDate, "balance")
         do {
             let objs = try context.fetch(request)
             var incomeTotals: [String: Double] = [:]

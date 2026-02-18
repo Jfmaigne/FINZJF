@@ -58,10 +58,10 @@ struct BudgetDashboardView: View {
                                     .font(.headline)
                                     .foregroundStyle(Color.secondary)
                                 Spacer() }
-                            Text("Solde début de mois: \(formatCurrency(initialBalance))")
+                            Text("(Solde début de mois : \(formatCurrency(initialBalance)))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(maxWidth: .infinity, alignment: .center)
 
                             VStack(spacing: 8) {
                                 HStack { Spacer()
@@ -148,7 +148,7 @@ struct BudgetDashboardView: View {
                                         .font(.system(size: 22, weight: .heavy))
                                         .foregroundStyle(.green)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("Recettes fixes")
+                                        Text("Recettes du mois")
                                             .font(.footnote)
                                             .foregroundStyle(.secondary)
                                             .lineLimit(1)
@@ -172,7 +172,7 @@ struct BudgetDashboardView: View {
                                         .font(.system(size: 22, weight: .heavy))
                                         .foregroundStyle(.red)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("Dépenses")
+                                        Text("Dépenses du mois")
                                             .font(.footnote)
                                             .foregroundStyle(.secondary)
                                             .lineLimit(1)
@@ -418,7 +418,7 @@ struct BudgetDashboardView: View {
         return occurrences.reduce(0) { partial, obj in
             let amount = obj.value(forKey: "amount") as? Double ?? 0
             if let date = obj.value(forKey: "date") as? Date, date <= now {
-                return partial + Decimal(amount)
+                return partial + Decimal(abs(amount))
             }
             return partial
         }

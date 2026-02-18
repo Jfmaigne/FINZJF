@@ -255,6 +255,9 @@ struct AccountView: View {
     @State private var resetError: String? = nil
     @State private var showingProfileConfirm = false
     @State private var firstName: String = AppSettings.firstName
+    
+    @State private var showingExportSheet = false
+    @State private var exportURL: URL? = nil
 
     var body: some View {
         NavigationStack {
@@ -289,6 +292,11 @@ struct AccountView: View {
                         showingProfileConfirm = true
                     } label: {
                         Label("Modifier le profil", systemImage: "person.crop.circle")
+                    }
+                    Button {
+                        Task { await exportOperations() }
+                    } label: {
+                        Label("Exporter les opérations", systemImage: "square.and.arrow.up")
                     }
                     Button(role: .destructive) {
                         showingResetAlert = true
@@ -334,6 +342,11 @@ struct AccountView: View {
                 Text("Tu vas être redirigé vers l’onglet Profil pour modifier ta configuration.")
             }
         }
+        .sheet(isPresented: $showingExportSheet) {
+            if let url = exportURL {
+                ActivityView(activityItems: [url])
+            }
+        }
     }
 
     private func resetAllData() {
@@ -362,6 +375,40 @@ struct AccountView: View {
             resetError = "Échec de la réinitialisation: \(error.localizedDescription)"
         }
         isResetting = false
+    }
+    
+    private func exportOperations() async {
+        let fetch = NSFetchRequest<NSManagedObject>(entityName: "BudgetEntryOccurrence")
+        fetch.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
+        do {
+            let operations = try context.fetch(fetch)
+            var csv = "date,montant,kind,titre\n"
+            let df = ISO8601DateFormatter()
+            for op in operations {
+                let date = (op.value(forKey: "date") as? Date).map { df.string(from: $0) } ?? ""
+                let montant = (op.value(forKey: "amount") as? Double) ?? 0
+                let kind = (op.value(forKey: "kind") as? String) ?? ""
+                let titre = (op.value(forKey: "title") as? String)?.replacingOccurrences(of: ",", with: " ") ?? ""
+                csv += "\(date),\(montant),\(kind),\(titre)\n"
+            }
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("operations.csv")
+            try csv.write(to: tmp, atomically: true, encoding: .utf8)
+            print("Export file path: \(tmp)")
+            let exists = FileManager.default.fileExists(atPath: tmp.path)
+            let attrs = try? FileManager.default.attributesOfItem(atPath: tmp.path)
+            let size = (attrs?[.size] as? NSNumber)?.intValue ?? 0
+            if exists && size > 0 {
+                // Optional: Short delay to ensure file is ready
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    exportURL = tmp
+                    showingExportSheet = true
+                }
+            } else {
+                print("Export failed: file missing or empty")
+            }
+        } catch {
+            print("Erreur export: \(error)")
+        }
     }
 }
 
@@ -427,3 +474,13 @@ struct BudgetGestionView: View {
     BudgetTabView()
 }
 
+import UIKit
+import SwiftUI
+struct ActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+    }
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
