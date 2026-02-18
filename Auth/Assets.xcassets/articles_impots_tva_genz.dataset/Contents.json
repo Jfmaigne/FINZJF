@@ -1,0 +1,12 @@
+{
+  "data" : [
+    {
+      "filename" : "articles_impots_tva_genz_v2.json",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
