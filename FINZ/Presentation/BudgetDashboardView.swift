@@ -29,6 +29,8 @@ struct BudgetDashboardView: View {
 
     @State private var initialBalance: Decimal = 0
 
+    @State private var appDataResetObserver: NSObjectProtocol?
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -251,15 +253,18 @@ struct BudgetDashboardView: View {
                 firstName = AppSettings.firstName
                 refreshDashboard()
                 // Listen to data reset notification from Account menu to start profile creation flow
-                NotificationCenter.default.addObserver(forName: Notification.Name("AppDataDidReset"), object: nil, queue: .main) { _ in
+                appDataResetObserver = NotificationCenter.default.addObserver(forName: Notification.Name("AppDataDidReset"), object: nil, queue: .main) { _ in
                     // After data reset, launch profile creation
                     startProfileCreationFlow()
                 }
             }
             .onDisappear {
-                NotificationCenter.default.removeObserver(self, name: Notification.Name("AppDataDidReset"), object: nil)
+                if let token = appDataResetObserver {
+                    NotificationCenter.default.removeObserver(token)
+                    appDataResetObserver = nil
+                }
             }
-            .onChange(of: firstName) { _ in
+            .onChange(of: firstName) { _, _ in
                 refreshDashboard()
             }
             .sheet(isPresented: $showingFixedIncomesSheet) {
@@ -657,7 +662,6 @@ private struct GenZStyledContainer<Content: View>: View {
     }
 }
 
-#if DEBUG
 private struct ProfileCreationView: View {
     var body: some View {
         VStack(spacing: 16) {
@@ -671,5 +675,4 @@ private struct ProfileCreationView: View {
         .padding()
     }
 }
-#endif
 

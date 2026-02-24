@@ -179,27 +179,30 @@ private struct WrapTagsView_Shared: View {
 private struct FlexibleTagWrap_Shared: View {
     let tags: [String]
     var body: some View {
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-        return ZStack(alignment: .topLeading) {
-            ForEach(tags, id: \.self) { tag in
-                TagChip_Shared(text: tag)
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
-                    .alignmentGuide(.leading) { d in
-                        if (abs(width - d.width) > UIScreen.main.bounds.width - 32) {
-                            width = 0
-                            height -= d.height
+        GeometryReader { proxy in
+            let availableWidth = proxy.size.width
+            var width: CGFloat = 0
+            var height: CGFloat = 0
+            ZStack(alignment: .topLeading) {
+                ForEach(tags, id: \.self) { tag in
+                    TagChip_Shared(text: tag)
+                        .padding(.trailing, 8)
+                        .padding(.bottom, 8)
+                        .alignmentGuide(.leading) { d in
+                            if abs(width - d.width) > availableWidth {
+                                width = 0
+                                height -= d.height
+                            }
+                            let result = width
+                            if tag == tags.last { width = 0 } else { width -= d.width }
+                            return result
                         }
-                        let result = width
-                        if tag == tags.last { width = 0 } else { width -= d.width }
-                        return result
-                    }
-                    .alignmentGuide(.top) { d in
-                        let result = height
-                        if tag == tags.last { height = 0 }
-                        return result
-                    }
+                        .alignmentGuide(.top) { d in
+                            let result = height
+                            if tag == tags.last { height = 0 }
+                            return result
+                        }
+                }
             }
         }
     }

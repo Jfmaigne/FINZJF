@@ -5,6 +5,9 @@
       location = "self:">
    </FileRef>
    <FileRef
-      location = "group:AddOperationOverlay.swift">
+      location = "group:Info.plist">
+   </FileRef>
+   <FileRef
+      location = "group:AppDelegate.swift">
    </FileRef>
 </Workspace>

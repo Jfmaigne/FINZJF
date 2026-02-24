@@ -36,10 +36,31 @@
 		76913EFA2F4129DD002E94E6 /* AddExpenseQuickSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddExpenseQuickSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		76A28A6C2F461F8400DA7D2A /* Exceptions for "FINZ" folder in "FINZTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 767524272F2F4A7900A3B61D /* FINZTests */;
+		};
+		76A28A6D2F461F8400DA7D2A /* Exceptions for "FINZ" folder in "FINZUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 767524312F2F4A7900A3B61D /* FINZUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		767524182F2F4A7900A3B61D /* Auth */ = {
+		767524182F2F4A7900A3B61D /* FINZ */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Auth;
+			exceptions = (
+				76A28A6C2F461F8400DA7D2A /* Exceptions for "FINZ" folder in "FINZTests" target */,
+				76A28A6D2F461F8400DA7D2A /* Exceptions for "FINZ" folder in "FINZUITests" target */,
+			);
+			path = FINZ;
 			sourceTree = "<group>";
 		};
 		7675242B2F2F4A7900A3B61D /* AuthTests */ = {
@@ -82,7 +103,7 @@
 		7675240D2F2F4A7900A3B61D = {
 			isa = PBXGroup;
 			children = (
-				767524182F2F4A7900A3B61D /* Auth */,
+				767524182F2F4A7900A3B61D /* FINZ */,
 				7675242B2F2F4A7900A3B61D /* AuthTests */,
 				767524352F2F4A7900A3B61D /* AuthUITests */,
 				767524172F2F4A7900A3B61D /* Products */,
@@ -110,14 +131,14 @@
 			buildPhases = (
 				767524122F2F4A7900A3B61D /* Sources */,
 				767524132F2F4A7900A3B61D /* Frameworks */,
-				767524142F2F4A7900A3B61D /* Resources */,
+				76A28A6E2F46209D00DA7D2A /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				767524182F2F4A7900A3B61D /* Auth */,
+				767524182F2F4A7900A3B61D /* FINZ */,
 			);
 			name = FINZ;
 			packageProductDependencies = (
@@ -180,7 +201,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					767524152F2F4A7900A3B61D = {
 						CreatedOnToolsVersion = 26.2;
@@ -217,13 +238,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		767524142F2F4A7900A3B61D /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		767524262F2F4A7900A3B61D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -232,6 +246,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		767524302F2F4A7900A3B61D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		76A28A6E2F46209D00DA7D2A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -338,6 +359,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -394,6 +416,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
