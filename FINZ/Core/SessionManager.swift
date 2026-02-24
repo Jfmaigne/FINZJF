@@ -83,7 +83,6 @@ final class SessionManager: ObservableObject {
 
     // MARK: - Google / Facebook placeholders
     func signInWithGoogle() async throws {
-        // TODO: Integrate GoogleSignIn SDK. For now, simulate success.
         let newSession = Session(userId: "google-demo-user", displayName: "Google User", provider: .google, authToken: UUID().uuidString)
         session = newSession
         persist(session: newSession)

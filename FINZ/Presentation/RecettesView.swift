@@ -106,9 +106,19 @@ struct RecettesView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Cette section a été modifiée : le titre "Recettes" et le bouton "+" ont été supprimés.
-                // Le message "Aucune recette à saisir..." est maintenant directement dans un 'if'
-                // pour s'assurer qu'il n'apparaît que lorsque la liste est vide.
+                Section {
+                    HStack {
+                        Spacer()
+                        Image("finz_logo_couleur")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 100)
+                            .accessibilityLabel("FINZ")
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
+                
                 if entries.isEmpty {
                     Section {
                         Text("Aucune recette à saisir selon les informations précédentes.")
@@ -196,9 +206,15 @@ struct RecettesView: View {
                         editingEntry = IncomeEntry(kind: .salaire)
                         showingAddSheet = true
                     } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .bold))
-                            .accessibilityLabel("Ajouter une recette")
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(colors: [Color(red: 0.52, green: 0.21, blue: 0.93), Color(red: 1.00, green: 0.29, blue: 0.63)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 34, height: 34)
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        .accessibilityLabel("Ajouter une recette")
                     }
                 }
             }

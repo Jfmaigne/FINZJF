@@ -205,12 +205,6 @@ struct ExpensesView: View {
             .navigationTitle("Dépenses")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismissView() } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                    .accessibilityLabel("Retour")
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         let newEntry = ExpenseEntry(id: UUID(), kind: .creditHabitation, amount: "")
@@ -218,7 +212,14 @@ struct ExpensesView: View {
                             editingEntry = newEntry
                         }
                     } label: {
-                        Image(systemName: "plus")
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(colors: [Color(red: 0.52, green: 0.21, blue: 0.93), Color(red: 1.00, green: 0.29, blue: 0.63)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 34, height: 34)
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
                     }
                     .accessibilityLabel("Ajouter une dépense")
                 }

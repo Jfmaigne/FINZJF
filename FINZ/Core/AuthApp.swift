@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import UIKit
 import CoreData
 
 @main
 struct AuthApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var sessionManager = SessionManager()
     let persistenceController = PersistenceController.shared
 
@@ -21,3 +23,4 @@ struct AuthApp: App {
         }
     }
 }
+

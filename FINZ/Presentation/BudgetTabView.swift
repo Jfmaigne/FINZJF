@@ -258,6 +258,7 @@ struct AccountView: View {
     
     @State private var showingExportSheet = false
     @State private var exportURL: URL? = nil
+    @State private var exportError: String? = nil
 
     var body: some View {
         NavigationStack {
@@ -341,10 +342,25 @@ struct AccountView: View {
             } message: {
                 Text("Tu vas être redirigé vers l’onglet Profil pour modifier ta configuration.")
             }
+            .alert("Erreur export", isPresented: Binding<Bool>(
+                get: { exportError != nil },
+                set: { if !$0 { exportError = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let error = exportError { Text(error) }
+            }
         }
-        .sheet(isPresented: $showingExportSheet) {
-            if let url = exportURL {
+        .sheet(isPresented: $showingExportSheet, onDismiss: {
+            cleanupExportFile()
+        }) {
+            if let url = exportURL, FileManager.default.fileExists(atPath: url.path) {
                 ActivityView(activityItems: [url])
+            } else {
+                Text("Erreur d'accès au fichier exporté.").onAppear {
+                    showingExportSheet = false
+                    exportError = "Le fichier export n'est plus disponible."
+                }
             }
         }
     }
@@ -382,6 +398,10 @@ struct AccountView: View {
         fetch.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
         do {
             let operations = try context.fetch(fetch)
+            if operations.isEmpty {
+                exportError = "Aucune opération à exporter."
+                return
+            }
             var csv = "date,montant,kind,titre\n"
             let df = ISO8601DateFormatter()
             for op in operations {
@@ -392,22 +412,35 @@ struct AccountView: View {
                 csv += "\(date),\(montant),\(kind),\(titre)\n"
             }
             let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("operations.csv")
+            
+            // Test file existence and minimal size before setting exportURL
             try csv.write(to: tmp, atomically: true, encoding: .utf8)
-            print("Export file path: \(tmp)")
             let exists = FileManager.default.fileExists(atPath: tmp.path)
             let attrs = try? FileManager.default.attributesOfItem(atPath: tmp.path)
             let size = (attrs?[.size] as? NSNumber)?.intValue ?? 0
-            if exists && size > 0 {
-                // Optional: Short delay to ensure file is ready
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            if !exists || size < 20 {
+                exportError = "Erreur lors de la création du fichier CSV."
+                return
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                // Verify again before showing sheet
+                if FileManager.default.fileExists(atPath: tmp.path) {
                     exportURL = tmp
                     showingExportSheet = true
+                } else {
+                    exportError = "Erreur lors de l'accès au fichier CSV."
                 }
-            } else {
-                print("Export failed: file missing or empty")
             }
         } catch {
-            print("Erreur export: \(error)")
+            exportError = "Erreur lors de l'export : \(error.localizedDescription)"
+        }
+    }
+    
+    private func cleanupExportFile() {
+        if let url = exportURL {
+            try? FileManager.default.removeItem(at: url)
+            exportURL = nil
         }
     }
 }
@@ -484,3 +517,4 @@ struct ActivityView: UIViewControllerRepresentable {
     }
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
+
