@@ -32,25 +32,41 @@ extension View {
 }
 
 struct FinzHeader: ViewModifier {
+    var title: String? = nil
+
     func body(content: Content) -> some View {
         content
             .safeAreaInset(edge: .top) {
-                HStack {
-                    Spacer()
-                    Image("finz_logo_couleur")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 144)
-                        .accessibilityLabel("Finz")
-                    Spacer()
+                VStack(spacing: 8) {
+                    HStack {
+                        Spacer()
+                        Image("finz_logo_couleur")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 144)
+                            .accessibilityLabel("Finz")
+                        Spacer()
+                    }
+                    .padding(.top, -15)
+                    .padding(.bottom, title == nil ? 2 : 0)
+
+                    if let title = title {
+                        HStack {
+                            Text(title)
+                                .font(.system(size: 40, weight: .heavy, design: .rounded))
+                                .foregroundStyle(Color(white: 0.1))
+                                .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 2)
+                    }
                 }
-                .padding(.top, -15)
-                .padding(.bottom, 2)
                 .background(Color.clear)
             }
     }
 }
 
 extension View {
-    func finzHeader() -> some View { self.modifier(FinzHeader()) }
+    func finzHeader(title: String? = nil) -> some View { self.modifier(FinzHeader(title: title)) }
 }

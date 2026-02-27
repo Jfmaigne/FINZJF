@@ -251,18 +251,8 @@ struct LexiconView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text("Lexique")
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Color(white: 0.1))
-                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal)
-            .padding(.top, 8)
-
-            // Search bar just under the title
+        VStack(spacing: 12) {
+            // Search bar
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
@@ -297,9 +287,9 @@ struct LexiconView: View {
         .background(
             LinearGradient(
                 colors: [
-                    Color.blue.opacity(0.06),
-                    Color.purple.opacity(0.06),
-                    Color.pink.opacity(0.06)
+                    Color.blue.opacity(0.04),
+                    Color.purple.opacity(0.04),
+                    Color.pink.opacity(0.04)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing

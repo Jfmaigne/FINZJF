@@ -28,8 +28,13 @@ struct BudgetDashboardView: View {
     @State private var forecastSeries: [(date: Date, balance: Decimal)] = []
 
     @State private var initialBalance: Decimal = 0
-
+    @State private var actualCurrentBalance: Decimal = 0 // solde réel du mois en cours
     @State private var appDataResetObserver: NSObjectProtocol?
+
+    // Projection navigation
+    @State private var projections: [MonthProjection] = []
+    @State private var selectedMonthIndex: Int = 0
+    @State private var selectedMonthDate: Date = Date()
 
     var body: some View {
         NavigationStack {
@@ -51,44 +56,81 @@ struct BudgetDashboardView: View {
                         }
                     }
                     .padding(.top, -15)
-
-                    // Current balance card
+                    
+                    // Solde actuel
                     DashboardCard {
                         VStack(alignment: .leading, spacing: 12) {
-                            HStack { Spacer()
-                                Text("Mon solde actuel")
+                            VStack(spacing: 6) {
+                                Text(selectedMonthIndex == 0 ? "Mon solde actuel" : "Mon solde (\(monthTitle(for: selectedMonthDate)))")
                                     .font(.headline)
                                     .foregroundStyle(Color.secondary)
-                                Spacer() }
-                            Text("(Solde début de mois : \(formatCurrency(initialBalance)))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .center)
-
-                            VStack(spacing: 8) {
-                                HStack { Spacer()
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("(Solde début de mois : \(formatCurrency(initialBalance)))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                            
+                            HStack(spacing: 18) {
+                                Button { changeSelectedMonth(by: -1) } label: {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 36, weight: .bold))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [Color(red: 0.52, green: 0.21, blue: 0.93), Color(red: 1.00, green: 0.29, blue: 0.63)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(selectedMonthIndex <= 0)
+                                .opacity(selectedMonthIndex <= 0 ? 0.35 : 1)
+                                
+                                VStack(spacing: 8) {
                                     Text(formatCurrency(currentBalance))
                                         .font(.system(size: 56, weight: .bold, design: .rounded))
-                                    Spacer() }
-                                HStack(spacing: 6) {
-                                    Image(systemName: "calendar")
-                                        .font(.subheadline)
-                                    Text("\(daysLeftInMonth) jours")
-                                        .font(.subheadline)
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Color(.secondarySystemBackground))
-                                .clipShape(Capsule())
-                            }
 
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "calendar")
+                                            .font(.subheadline)
+                                        let dayLabel = daysLeftInMonth == 1 ? "1 jour" : "\(daysLeftInMonth) jours"
+                                        Text(dayLabel)
+                                            .font(.subheadline)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.secondarySystemBackground))
+                                    .clipShape(Capsule())
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                Button { changeSelectedMonth(by: 1) } label: {
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 36, weight: .bold))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [Color(red: 0.52, green: 0.21, blue: 0.93), Color(red: 1.00, green: 0.29, blue: 0.63)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(selectedMonthIndex >= projections.count - 1)
+                                .opacity(selectedMonthIndex >= projections.count - 1 ? 0.35 : 1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            
                             HStack { Spacer()
                                 Text("Tu gères ce mois-ci 😎")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                 Spacer() }
-                                .padding(.top, 2)
-
+                            .padding(.top, 2)
+                            
                             HStack(spacing: 12) {
                                 Button {
                                     let gen = UIImpactFeedbackGenerator(style: .light)
@@ -112,7 +154,7 @@ struct BudgetDashboardView: View {
                                     .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
                                 }
                                 .buttonStyle(.plain)
-
+                                
                                 Button {
                                     let gen = UIImpactFeedbackGenerator(style: .light)
                                     gen.impactOccurred()
@@ -140,8 +182,8 @@ struct BudgetDashboardView: View {
                         }
                         .frame(minHeight: 200)
                     }
-
-                    // Fixed incomes / expenses row
+                    
+                    // Recettes / Dépenses
                     HStack(spacing: 12) {
                         DashboardCard {
                             Button { showingFixedIncomesSheet = true } label: {
@@ -192,8 +234,8 @@ struct BudgetDashboardView: View {
                             .buttonStyle(.plain)
                         }
                     }
-
-                    // Forecast card
+                    
+                    // Prévisionnel
                     DashboardCard {
                         Button {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
@@ -206,18 +248,18 @@ struct BudgetDashboardView: View {
                                         .font(.headline)
                                         .foregroundStyle(Color.secondary)
                                     Spacer() }
-
+                                
                                 HStack { Spacer()
                                     Text(formatCurrency(forecast))
                                         .font(.system(size: 52, weight: .bold, design: .rounded))
                                     Spacer() }
-
+                                
                                 HStack { Spacer()
                                     Text("Profite pour mettre de côté !")
                                         .font(.subheadline)
                                         .foregroundStyle(Color(red: 0.52, green: 0.21, blue: 0.93))
                                     Spacer() }
-                                    .padding(.top, 2)
+                                .padding(.top, 2)
                             }
                         }
                         .buttonStyle(.plain)
@@ -252,9 +294,7 @@ struct BudgetDashboardView: View {
             .onAppear {
                 firstName = AppSettings.firstName
                 refreshDashboard()
-                // Listen to data reset notification from Account menu to start profile creation flow
                 appDataResetObserver = NotificationCenter.default.addObserver(forName: Notification.Name("AppDataDidReset"), object: nil, queue: .main) { _ in
-                    // After data reset, launch profile creation
                     startProfileCreationFlow()
                 }
             }
@@ -268,18 +308,16 @@ struct BudgetDashboardView: View {
                 refreshDashboard()
             }
             .sheet(isPresented: $showingFixedIncomesSheet) {
-                RecettesFixesSheet()
+                RecettesFixesSheet(monthDate: selectedMonthDate)
                     .environment(\.managedObjectContext, context)
             }
             .sheet(isPresented: $showingFixedExpensesSheet) {
-                DepensesFixesSheet(monthKey: BudgetProjectionManager.monthKey(for: Date()))
+                DepensesFixesSheet(monthKey: BudgetProjectionManager.monthKey(for: selectedMonthDate))
                     .environment(\.managedObjectContext, context)
             }
             .sheet(isPresented: $showingProfileCreation) {
-                // TODO: Replace `ProfileCreationView()` with your actual onboarding/profile creation view
                 ProfileCreationView()
                     .onDisappear {
-                        // Refresh dashboard and greeting after profile creation
                         firstName = AppSettings.firstName
                         refreshDashboard()
                     }
@@ -330,12 +368,164 @@ struct BudgetDashboardView: View {
                 .environment(\.managedObjectContext, context)
             }
         }
+        
+}
+    // MARK: - Projection helpers
+    private struct MonthProjection {
+        let monthIndex: Int
+        let monthDate: Date
+        let monthKey: String
+        let startBalance: Decimal
+        let incomes: Decimal
+        let expenses: Decimal
+        let endBalance: Decimal
     }
 
-    private func startProfileCreationFlow() {
-        // Present the profile creation flow
-        showingProfileCreation = true
+    private func monthTitle(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "LLLL yyyy"
+        return formatter.string(from: date).capitalized
     }
+
+    private func changeSelectedMonth(by delta: Int) {
+        let newIndex = max(0, min((projections.count - 1), selectedMonthIndex + delta))
+        guard newIndex != selectedMonthIndex else { return }
+        selectedMonthIndex = newIndex
+        if newIndex < projections.count {
+            selectedMonthDate = projections[newIndex].monthDate
+            applyProjection(at: newIndex)
+        }
+    }
+
+    private func startOfMonth(for date: Date) -> Date {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.year, .month], from: date)
+        return cal.date(from: comps) ?? date
+    }
+
+    private func daysInMonth(for date: Date) -> Int {
+        let cal = Calendar.current
+        let range = cal.range(of: .day, in: .month, for: date)
+        return range?.count ?? 30
+    }
+
+    private func fetchOccurrences(monthKey: String, kind: String) throws -> [NSManagedObject] {
+        let fetch = NSFetchRequest<NSManagedObject>(entityName: "BudgetEntryOccurrence")
+        fetch.predicate = NSPredicate(format: "monthKey == %@ AND kind == %@", monthKey, kind)
+        fetch.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
+        return try context.fetch(fetch)
+    }
+
+    private func upsertAutoBalance(monthKey: String, date: Date, amount: Decimal) throws {
+        let fetch = NSFetchRequest<NSManagedObject>(entityName: "BudgetEntryOccurrence")
+        fetch.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "monthKey == %@", monthKey),
+            NSPredicate(format: "kind == %@", "balance"),
+            NSPredicate(format: "isManual == NO")
+        ])
+        fetch.fetchLimit = 1
+        let existing = try context.fetch(fetch).first
+        let obj: NSManagedObject
+        if let existing = existing { obj = existing }
+        else {
+            guard let entity = NSEntityDescription.entity(forEntityName: "BudgetEntryOccurrence", in: context) else { return }
+            obj = NSManagedObject(entity: entity, insertInto: context)
+            obj.setValue(UUID(), forKey: "id")
+            obj.setValue(false, forKey: "isManual")
+            obj.setValue("balance", forKey: "kind")
+            obj.setValue(monthKey, forKey: "monthKey")
+            obj.setValue("Solde initial prévisionnel", forKey: "title")
+        }
+        obj.setValue((amount as NSDecimalNumber).doubleValue, forKey: "amount")
+        obj.setValue(date, forKey: "date")
+    }
+
+    private func buildProjections(horizon: Int = 12, baseInitialBalance: Decimal) {
+        let cal = Calendar.current
+        let startMonth = startOfMonth(for: Date())
+        var runningStart = baseInitialBalance
+        var result: [MonthProjection] = []
+
+        for offset in 0..<horizon {
+            guard let monthDate = cal.date(byAdding: .month, value: offset, to: startMonth) else { break }
+            let monthKey = BudgetProjectionManager.monthKey(for: monthDate)
+
+            if offset > 0 {
+                try? BudgetProjectionManager.projectIncomes(for: monthDate, context: context)
+                try? BudgetProjectionManager.projectExpenses(for: monthDate, context: context)
+                try? upsertAutoBalance(monthKey: monthKey, date: monthDate, amount: runningStart)
+            }
+
+            let incomes = (try? fetchOccurrences(monthKey: monthKey, kind: "income")) ?? []
+            let expenses = (try? fetchOccurrences(monthKey: monthKey, kind: "expense")) ?? []
+
+            let incomesTotal = incomes.reduce(Decimal.zero) { partial, obj in
+                let amount = obj.value(forKey: "amount") as? Double ?? 0
+                return partial + Decimal(amount)
+            }
+            let expensesTotal = expenses.reduce(Decimal.zero) { partial, obj in
+                let amount = obj.value(forKey: "amount") as? Double ?? 0
+                return partial + Decimal(abs(amount))
+            }
+            let endBalance = runningStart + incomesTotal - expensesTotal
+            result.append(.init(monthIndex: offset, monthDate: monthDate, monthKey: monthKey, startBalance: runningStart, incomes: incomesTotal, expenses: expensesTotal, endBalance: endBalance))
+            runningStart = endBalance
+        }
+        projections = result
+        if selectedMonthIndex >= projections.count { selectedMonthIndex = max(0, projections.count - 1) }
+        if let current = projections.first(where: { $0.monthIndex == selectedMonthIndex }) {
+            selectedMonthDate = current.monthDate
+        }
+    }
+
+    private func applyProjection(at index: Int) {
+        guard index < projections.count else { return }
+        let proj = projections[index]
+        fixedIncomes = proj.incomes
+        fixedExpenses = proj.expenses
+        initialBalance = proj.startBalance
+        forecast = proj.endBalance
+        // Pour le mois courant, on affiche le solde réel actuel ; pour les mois futurs on affiche le solde initial prévisionnel
+        currentBalance = (index == 0) ? actualCurrentBalance : proj.startBalance
+
+        let incomes = (try? fetchOccurrences(monthKey: proj.monthKey, kind: "income")) ?? []
+        let expenses = (try? fetchOccurrences(monthKey: proj.monthKey, kind: "expense")) ?? []
+        forecastSeries = computeForecastSeries(for: proj.monthDate, incomes: incomes, expenses: expenses, startBalance: proj.startBalance)
+
+        daysLeftInMonth = (index == 0) ? computeDaysLeftInMonth() : daysInMonth(for: proj.monthDate)
+    }
+
+    private func computeForecastSeries(for monthDate: Date, incomes: [NSManagedObject], expenses: [NSManagedObject], startBalance: Decimal) -> [(date: Date, balance: Decimal)] {
+        let cal = Calendar.current
+        let start = startOfMonth(for: monthDate)
+        guard let end = cal.date(byAdding: .month, value: 1, to: start) else { return [] }
+
+        var deltas: [Date: Decimal] = [:]
+        func dayKey(_ d: Date) -> Date { cal.date(from: cal.dateComponents([.year, .month, .day], from: d)) ?? d }
+
+        for obj in incomes {
+            guard let d = obj.value(forKey: "date") as? Date else { continue }
+            deltas[dayKey(d), default: 0] += Decimal(obj.value(forKey: "amount") as? Double ?? 0)
+        }
+        for obj in expenses {
+            guard let d = obj.value(forKey: "date") as? Date else { continue }
+            deltas[dayKey(d), default: 0] -= Decimal(abs(obj.value(forKey: "amount") as? Double ?? 0))
+        }
+
+        var balance = startBalance
+        var day = start
+        var result: [(Date, Decimal)] = []
+        while day < end {
+            if let delta = deltas[day] { balance += delta }
+            result.append((day, balance))
+            guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
+        }
+        return result
+    }
+
+    private func startProfileCreationFlow() { showingProfileCreation = true }
 
     private func formatCurrency(_ value: Decimal, code: String = Locale.current.currency?.identifier ?? "EUR") -> String {
         let number = NSDecimalNumber(decimal: value)
@@ -352,7 +542,7 @@ struct BudgetDashboardView: View {
         var endComponents = DateComponents()
         endComponents.year = year
         endComponents.month = month + 1
-        endComponents.day = 0 // day 0 of next month = last day of current month
+        endComponents.day = 0
         let endOfMonth = calendar.date(from: endComponents) ?? now
         let diff = calendar.dateComponents([.day], from: now, to: endOfMonth)
         return max(0, (diff.day ?? 0))
@@ -396,17 +586,6 @@ struct BudgetDashboardView: View {
         }
     }
 
-    private func computeMonSoldeActuel(from occurrences: [NSManagedObject]) -> Decimal {
-        let now = Date()
-        return occurrences.reduce(0) { partial, obj in
-            let amount = obj.value(forKey: "amount") as? Double ?? 0
-            if let date = obj.value(forKey: "date") as? Date, date <= now {
-                return partial + Decimal(amount)
-            }
-            return partial
-        }
-    }
-
     private func computeRecettesPassees(from occurrences: [NSManagedObject]) -> Decimal {
         let now = Date()
         return occurrences.reduce(0) { partial, obj in
@@ -434,7 +613,6 @@ struct BudgetDashboardView: View {
             let incomes = try fetchIncomeOccurrencesForCurrentMonth()
             let expenses = try fetchExpenseOccurrencesForCurrentMonth()
             let balances = try fetchBalanceOccurrencesForCurrentMonth()
-
             fixedIncomes = computeRecettesFixesDuMois(from: incomes)
             fixedExpenses = computeDepensesFixesDuMois(from: expenses)
 
@@ -445,82 +623,14 @@ struct BudgetDashboardView: View {
                 return partial + Decimal(amount)
             }
             currentBalance = initialBalance + recettesPassees - depensesPassees
+            actualCurrentBalance = currentBalance
             self.initialBalance = initialBalance
 
-            forecastSeries = computeForecastSeries(incomes: incomes, expenses: expenses, initialBalance: initialBalance)
-
-            let now = Date()
-            let remainingIncomes = incomes.reduce(Decimal.zero) { partial, obj in
-                let amount = obj.value(forKey: "amount") as? Double ?? 0
-                if let date = obj.value(forKey: "date") as? Date, date > now { return partial + Decimal(amount) }
-                return partial
-            }
-            let remainingExpensesAbs = expenses.reduce(Decimal.zero) { partial, obj in
-                let amount = obj.value(forKey: "amount") as? Double ?? 0
-                if let date = obj.value(forKey: "date") as? Date, date > now { return partial + Decimal(abs(amount)) }
-                return partial
-            }
-            forecast = currentBalance + remainingIncomes - remainingExpensesAbs
-
-            daysLeftInMonth = computeDaysLeftInMonth()
+            buildProjections(horizon: 12, baseInitialBalance: initialBalance)
+            applyProjection(at: selectedMonthIndex)
         } catch {
             print("Fetch occurrences error: \(error)")
         }
-    }
-
-    private func computeForecastSeries(incomes: [NSManagedObject], expenses: [NSManagedObject], initialBalance: Decimal) -> [(date: Date, balance: Decimal)] {
-        let cal = Calendar.current
-        let now = Date()
-        // Start and end of current month
-        let comps = cal.dateComponents([.year, .month], from: now)
-        let startOfMonth = cal.date(from: comps) ?? now
-        let endOfMonth = cal.date(byAdding: .month, value: 1, to: startOfMonth) ?? now
-
-        // Build daily deltas map
-        var deltas: [Date: Decimal] = [:]
-        func normalizedDay(_ d: Date) -> Date {
-            let c = cal.dateComponents([.year, .month, .day], from: d)
-            return cal.date(from: c) ?? d
-        }
-
-        for obj in incomes {
-            guard let d = obj.value(forKey: "date") as? Date else { continue }
-            let day = normalizedDay(d)
-            let amount = obj.value(forKey: "amount") as? Double ?? 0
-            deltas[day, default: 0] += Decimal(amount)
-        }
-        for obj in expenses {
-            guard let d = obj.value(forKey: "date") as? Date else { continue }
-            let day = normalizedDay(d)
-            let amount = obj.value(forKey: "amount") as? Double ?? 0
-            // Soustraire la dépense (utilise valeur absolue pour cohérence)
-            deltas[day, default: 0] -= Decimal(abs(amount))
-        }
-
-        // Start from initial balance + sum of past income-expenses
-        let pastIncome = incomes.reduce(Decimal.zero) { partial, obj in
-            let amount = obj.value(forKey: "amount") as? Double ?? 0
-            if let d = obj.value(forKey: "date") as? Date, d <= now { return partial + Decimal(amount) }
-            return partial
-        }
-        let pastExpense = expenses.reduce(Decimal.zero) { partial, obj in
-            let amount = obj.value(forKey: "amount") as? Double ?? 0
-            if let d = obj.value(forKey: "date") as? Date, d <= now { return partial + Decimal(abs(amount)) }
-            return partial
-        }
-        var balance = initialBalance + pastIncome - pastExpense
-
-        // Build series for each day of the month
-        var result: [(Date, Decimal)] = []
-        var day = startOfMonth
-        while day < endOfMonth {
-            // Apply today's delta if any
-            if let delta = deltas[day] { balance += delta }
-            result.append((day, balance))
-            guard let next = cal.date(byAdding: .day, value: 1, to: day) else { break }
-            day = next
-        }
-        return result
     }
 }
 
@@ -675,4 +785,3 @@ private struct ProfileCreationView: View {
         .padding()
     }
 }
-

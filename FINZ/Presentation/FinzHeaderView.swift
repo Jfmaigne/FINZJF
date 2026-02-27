@@ -39,8 +39,5 @@ public struct FinzHeaderModifier: ViewModifier {
     }
 }
 
-public extension View {
-    func finzHeader(title: String) -> some View {
-        modifier(FinzHeaderModifier(title: title))
-    }
-}
+// Extension finzHeader(title:) déplacée dans CommonLayoutModifiers pour unifier le header
+// et éviter les conflits d’extension. Cette struct reste disponible si besoin de l’utiliser directement.

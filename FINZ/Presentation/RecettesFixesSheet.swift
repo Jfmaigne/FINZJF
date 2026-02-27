@@ -12,7 +12,11 @@ struct RecettesFixesSheet: View {
     @State private var editedOccurrence: BudgetEntryOccurrence?
     @State private var showEditSheet: Bool = false
     
-    private let monthKey = BudgetProjectionManager.monthKey(for: Date())
+    private let monthKey: String
+    
+    init(monthDate: Date = Date()) {
+        self.monthKey = BudgetProjectionManager.monthKey(for: monthDate)
+    }
     
     private func todayInsertionIndex(in items: [BudgetEntryOccurrence]) -> Int {
         let cal = Calendar.current
@@ -337,4 +341,3 @@ private struct EditOccurrenceSheet: View {
         }
     }
 }
-
